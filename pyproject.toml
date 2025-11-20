@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pydantic-cli"
-version = "0.2.0"
+name = "pydantic-config-generator"
+version = "0.1.0"
 description = "Interactive configuration prompt for Pydantic models"
 readme = "README.md"
 license = {text = "MIT"}
@@ -27,12 +27,12 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/dommolo/pydantic-cli"
-Repository = "https://github.com/dommolo/pydantic-cli"
+Homepage = "https://github.com/dommolo/pydantic-config-generator"
+Repository = "https://github.com/dommolo/pydantic-config-generator"
 
 [tool.setuptools]
-packages = ["pydantic_cli"]
+packages = ["pydantic_config_generator"]
 
 [tool.setuptools.package-dir]
-pydantic_cli = "src"
+pydantic_config_generator = "src"
 

@@ -1,18 +1,18 @@
-# pydantic-cli
+# pydantic-config-generator
 
-**pydantic-cli** è una libreria Python che fornisce prompt interattivi per la configurazione di modelli Pydantic. Permette di creare interfacce CLI interattive per raccogliere e validare dati secondo i tuoi modelli Pydantic.
+**pydantic-config-generator** è una libreria Python che fornisce prompt interattivi per la configurazione di modelli Pydantic. Permette di creare interfacce CLI interattive per raccogliere e validare dati secondo i tuoi modelli Pydantic.
 
 ## Caratteristiche
 
 - 🎯 **Validazione automatica**: Usa la validazione di Pydantic per garantire dati corretti
 - 🔄 **Supporto per modelli annidati**: Gestisce configurazioni complesse con modelli Pydantic annidati
-- ⚡ **Facile da usare**: Basta passare il tuo modello Pydantic e pydantic-cli fa il resto
+- ⚡ **Facile da usare**: Basta passare il tuo modello Pydantic e pydantic-config-generator fa il resto
 - 🛡️ **Type-safe**: Sfrutta il sistema di tipi di Pydantic
 
 ## Installazione
 
 ```bash
-pip install pydantic-cli
+pip install pydantic-config-generator
 ```
 
 ## Utilizzo
@@ -21,7 +21,7 @@ pip install pydantic-cli
 
 ```python
 from pydantic import BaseModel
-from pydantic_cli import run
+from pydantic_config_generator import run
 
 class ExampleConfig(BaseModel):
     name: str = ''
@@ -37,7 +37,7 @@ run(ExampleConfig)
 
 ```python
 from pydantic import BaseModel
-from pydantic_cli import run
+from pydantic_config_generator import run
 
 class ExampleSubConfig(BaseModel):
     name: str
@@ -58,9 +58,9 @@ Il sistema ti chiederà di inserire i valori per ogni campo, mostrando i valori 
 
 ## Come Funziona
 
-1. **Campi semplici**: Per ogni campo del modello, pydantic-cli chiede un valore, mostrando il default se disponibile
+1. **Campi semplici**: Per ogni campo del modello, pydantic-config-generator chiede un valore, mostrando il default se disponibile
 2. **Validazione**: Ogni input viene validato secondo le regole del modello Pydantic
-3. **Modelli annidati**: Se un campo è un modello Pydantic, pydantic-cli chiede se includerlo (se opzionale) e poi richiede i suoi campi
+3. **Modelli annidati**: Se un campo è un modello Pydantic, pydantic-config-generator chiede se includerlo (se opzionale) e poi richiede i suoi campi
 4. **Gestione errori**: Se un valore non è valido, viene mostrato un errore e viene richiesto di nuovo
 
 ## Requisiti
