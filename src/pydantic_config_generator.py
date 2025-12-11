@@ -1,24 +1,35 @@
 import configparser
 from pathlib import Path
 from pydantic import BaseModel
+import os
 import sys
 from typing import Any
 
 
-def prompt_value(item, group: str = '') -> Any:
+def prompt_value(item, group: str = '', environ_as_default: bool = False) -> Any:
+    if environ_as_default:
+        env_value = os.environ.get(item.name.upper(), None)
+        default_value = env_value if env_value else item.default
+    else:
+        default_value = item.default
+
     while True:
-        msg = f'{group}{item.name} [{item.default}]: '
-        v = input(msg)
+        msg = f'{group}{item.name}'
 
-        if item.required and v == '':
-            print(f"Error: {item.name} is required")
-            continue
+        if default_value is not None:
+            msg = f'{msg} [{default_value}]'
 
-        if v == '' and item.allow_none:
-            return None
+        elif item.allow_none:
+            msg = f'{msg}*'
+        
+        v = input(f'{msg}: ')
 
-        if v == '' and item.default is not None:
-            return item.default
+        if v == '':
+            if default_value is None and not item.allow_none:
+                print(f"Error: {item.name} is required")
+                continue
+
+            return default_value
 
         vv, verr = item.validate(v, {}, loc=item.name)
         if verr:
@@ -28,7 +39,7 @@ def prompt_value(item, group: str = '') -> Any:
         return vv
 
 
-def prompt_config(config: BaseModel, group: str = None) -> BaseModel:
+def prompt_config(config: BaseModel, group: str = None, environ_as_default: bool = False) -> BaseModel:
     output = {}
 
     if group is None:
@@ -43,9 +54,9 @@ def prompt_config(config: BaseModel, group: str = None) -> BaseModel:
                     continue
 
             output[key] = prompt_config(
-                field.type_, group=f'{group}{field.name}.')
+                field.type_, group=f'{group}{field.name}.', environ_as_default=environ_as_default)
         else:
-            value = prompt_value(field, group)
+            value = prompt_value(field, group, environ_as_default=environ_as_default)
 
             if value != field.default:
                 output[key] = value
@@ -53,10 +64,10 @@ def prompt_config(config: BaseModel, group: str = None) -> BaseModel:
     return output
 
 
-def prompt(config_class: BaseModel):
+def prompt(config_class: BaseModel, environ_as_default: bool = False):
     while True:
         try:
-            data = prompt_config(config_class)
+            data = prompt_config(config_class, environ_as_default=environ_as_default)
             config_class(**data)
             return data
         except Exception as e:
@@ -114,15 +125,15 @@ def write_env(data: dict, file: str = '.env', group_separator: str = '.', use_up
     print(f'File {file} created successfully.')
 
 
-def create_ini(config: BaseModel, file: str = 'config.ini'):
+def create_ini(config: BaseModel, file: str = 'config.ini', environ_as_default: bool = False):
     check_file(file)
 
-    data = prompt(config)
+    data = prompt(config, environ_as_default)
     write_ini(data, file)
 
 
-def create_env(config: BaseModel, file: str = '.env', group_separator: str = '.', use_uppercase: bool = True):
+def create_env(config: BaseModel, file: str = '.env', group_separator: str = '.', use_uppercase: bool = True, environ_as_default: bool = False):
     check_file(file)
 
-    data = prompt(config)
+    data = prompt(config, environ_as_default)
     write_env(data, file, group_separator, use_uppercase)
