@@ -5,10 +5,15 @@ import os
 import sys
 from typing import Any
 
+ENVIRON_MODE_IGNORE = 'ignore'
+ENVIRON_MODE_DEFAULT = 'default'
+ENVIRON_MODE_SKIP = 'skip'
 
-def prompt_value(item, group: str = '', environ_as_default: bool = False) -> Any:
-    if environ_as_default:
-        env_value = os.environ.get(item.name.upper(), None)
+
+def prompt_value(item, group: str = '', environ_mode: str = ENVIRON_MODE_IGNORE) -> Any:
+    env_value = os.environ.get(item.name.upper(), None)
+
+    if environ_mode != ENVIRON_MODE_IGNORE:
         default_value = env_value if env_value else item.default
     else:
         default_value = item.default
@@ -16,20 +21,26 @@ def prompt_value(item, group: str = '', environ_as_default: bool = False) -> Any
     while True:
         msg = f'{group}{item.name}'
 
-        if default_value is not None:
-            msg = f'{msg} [{default_value}]'
+        if environ_mode == ENVIRON_MODE_SKIP and default_value is not None:
+            v = default_value
+            print(f'{msg}: {v}')
+            environ_mode = ENVIRON_MODE_DEFAULT  # prevent infinite loop
+        else:
 
-        elif item.allow_none:
-            msg = f'{msg}*'
-        
-        v = input(f'{msg}: ')
+            if default_value is not None:
+                msg = f'{msg} [{default_value}]'
 
-        if v == '':
-            if default_value is None and not item.allow_none:
-                print(f"Error: {item.name} is required")
-                continue
+            elif item.allow_none:
+                msg = f'{msg}*'
 
-            return default_value
+            v = input(f'{msg}: ')
+
+            if v == '':
+                if default_value is None and not item.allow_none:
+                    print(f"Error: {item.name} is required")
+                    continue
+
+                return default_value
 
         vv, verr = item.validate(v, {}, loc=item.name)
         if verr:
@@ -39,7 +50,7 @@ def prompt_value(item, group: str = '', environ_as_default: bool = False) -> Any
         return vv
 
 
-def prompt_config(config: BaseModel, group: str = None, environ_as_default: bool = False) -> BaseModel:
+def prompt_config(config: BaseModel, group: str = None, environ_mode: str = ENVIRON_MODE_IGNORE) -> BaseModel:
     output = {}
 
     if group is None:
@@ -54,9 +65,9 @@ def prompt_config(config: BaseModel, group: str = None, environ_as_default: bool
                     continue
 
             output[key] = prompt_config(
-                field.type_, group=f'{group}{field.name}.', environ_as_default=environ_as_default)
+                field.type_, group=f'{group}{field.name}.', environ_mode=environ_mode)
         else:
-            value = prompt_value(field, group, environ_as_default=environ_as_default)
+            value = prompt_value(field, group, environ_mode=environ_mode)
 
             if value != field.default:
                 output[key] = value
@@ -64,10 +75,10 @@ def prompt_config(config: BaseModel, group: str = None, environ_as_default: bool
     return output
 
 
-def prompt(config_class: BaseModel, environ_as_default: bool = False):
+def prompt(config_class: BaseModel, environ_mode: str = ENVIRON_MODE_IGNORE):
     while True:
         try:
-            data = prompt_config(config_class, environ_as_default=environ_as_default)
+            data = prompt_config(config_class, environ_mode=environ_mode)
             config_class(**data)
             return data
         except Exception as e:
@@ -125,15 +136,15 @@ def write_env(data: dict, file: str = '.env', group_separator: str = '.', use_up
     print(f'File {file} created successfully.')
 
 
-def create_ini(config: BaseModel, file: str = 'config.ini', environ_as_default: bool = False):
+def create_ini(config: BaseModel, file: str = 'config.ini', environ_mode: str = ENVIRON_MODE_IGNORE):
     check_file(file)
 
-    data = prompt(config, environ_as_default)
+    data = prompt(config, environ_mode)
     write_ini(data, file)
 
 
-def create_env(config: BaseModel, file: str = '.env', group_separator: str = '.', use_uppercase: bool = True, environ_as_default: bool = False):
+def create_env(config: BaseModel, file: str = '.env', group_separator: str = '.', use_uppercase: bool = True, environ_mode: str = ENVIRON_MODE_IGNORE):
     check_file(file)
 
-    data = prompt(config, environ_as_default)
+    data = prompt(config, environ_mode)
     write_env(data, file, group_separator, use_uppercase)

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from pydantic_config_generator import prompt, write_ini
+from pydantic_config_generator import prompt, write_ini, ENVIRON_MODE_SKIP
 
 
 class Circle(BaseModel):
@@ -9,7 +9,7 @@ class Circle(BaseModel):
     text: str = None
     
 
-config = prompt(Circle, environ_as_default=True)
+config = prompt(Circle, environ_mode=ENVIRON_MODE_SKIP)
 print(config)
 
 write_ini(config)
