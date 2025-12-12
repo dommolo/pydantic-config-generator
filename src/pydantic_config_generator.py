@@ -13,6 +13,8 @@ ENVIRON_MODE_SKIP = 'skip'
 def prompt_value(item, group: str = '', environ_mode: str = ENVIRON_MODE_IGNORE) -> Any:
     env_value = os.environ.get(item.name.upper(), None)
 
+    skip = environ_mode == ENVIRON_MODE_SKIP and env_value  # skip only if env_value is set
+
     if environ_mode != ENVIRON_MODE_IGNORE:
         default_value = env_value if env_value else item.default
     else:
@@ -21,12 +23,11 @@ def prompt_value(item, group: str = '', environ_mode: str = ENVIRON_MODE_IGNORE)
     while True:
         msg = f'{group}{item.name}'
 
-        if environ_mode == ENVIRON_MODE_SKIP and default_value is not None:
+        if skip:
             v = default_value
             print(f'{msg}: {v}')
-            environ_mode = ENVIRON_MODE_DEFAULT  # prevent infinite loop
+            skip = False  # prevent infinite loop
         else:
-
             if default_value is not None:
                 msg = f'{msg} [{default_value}]'
 

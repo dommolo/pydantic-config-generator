@@ -7,6 +7,7 @@ class Circle(BaseModel):
     border_color: str
     fill_color: str = '#FF0000'
     text: str = None
+    shadow: bool = False
     
 
 config = prompt(Circle, environ_mode=ENVIRON_MODE_SKIP)
