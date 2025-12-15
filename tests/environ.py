@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from pydantic_config_generator import prompt, write_ini, ENVIRON_MODE_SKIP
+from pydantic_config_generator import prompt, write_ini, ENVIRON_MODE_SKIP, DEFAULT_MODE_AUTO
 
 
 class Circle(BaseModel):

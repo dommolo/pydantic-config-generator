@@ -8,17 +8,25 @@ from typing import Any
 ENVIRON_MODE_IGNORE = 'ignore'
 ENVIRON_MODE_DEFAULT = 'default'
 ENVIRON_MODE_SKIP = 'skip'
+DEFAULT_MODE_ASK = 'ask'
+DEFAULT_MODE_AUTO = 'auto'
 
 
-def prompt_value(item, group: str = '', environ_mode: str = ENVIRON_MODE_IGNORE) -> Any:
+def prompt_value(item, group: str = '', environ_mode: str = ENVIRON_MODE_IGNORE, default_mode: str = DEFAULT_MODE_ASK) -> Any:
     env_value = os.environ.get(item.name.upper(), None)
 
-    skip = environ_mode == ENVIRON_MODE_SKIP and env_value  # skip only if env_value is set
+    skip = False
+
+    if environ_mode == ENVIRON_MODE_DEFAULT and env_value:  # skip if env_value is set
+        skip = True
 
     if environ_mode != ENVIRON_MODE_IGNORE:
         default_value = env_value if env_value else item.default
     else:
         default_value = item.default
+
+    if default_mode == DEFAULT_MODE_AUTO and default_value is not None:
+        skip = True
 
     while True:
         msg = f'{group}{item.name}'
@@ -51,7 +59,7 @@ def prompt_value(item, group: str = '', environ_mode: str = ENVIRON_MODE_IGNORE)
         return vv
 
 
-def prompt_config(config: BaseModel, group: str = None, environ_mode: str = ENVIRON_MODE_IGNORE) -> BaseModel:
+def prompt_config(config: BaseModel, group: str = None, environ_mode: str = ENVIRON_MODE_IGNORE, default_mode: str = DEFAULT_MODE_ASK) -> BaseModel:
     output = {}
 
     if group is None:
@@ -66,9 +74,9 @@ def prompt_config(config: BaseModel, group: str = None, environ_mode: str = ENVI
                     continue
 
             output[key] = prompt_config(
-                field.type_, group=f'{group}{field.name}.', environ_mode=environ_mode)
+                field.type_, group=f'{group}{field.name}.', environ_mode=environ_mode, default_mode=default_mode)
         else:
-            value = prompt_value(field, group, environ_mode=environ_mode)
+            value = prompt_value(field, group, environ_mode=environ_mode, default_mode=default_mode)
 
             if value != field.default:
                 output[key] = value
@@ -76,10 +84,10 @@ def prompt_config(config: BaseModel, group: str = None, environ_mode: str = ENVI
     return output
 
 
-def prompt(config_class: BaseModel, environ_mode: str = ENVIRON_MODE_IGNORE):
+def prompt(config_class: BaseModel, environ_mode: str = ENVIRON_MODE_IGNORE, default_mode: str = DEFAULT_MODE_ASK):
     while True:
         try:
-            data = prompt_config(config_class, environ_mode=environ_mode)
+            data = prompt_config(config_class, environ_mode=environ_mode, default_mode=default_mode)
             config_class(**data)
             return data
         except Exception as e:
@@ -144,8 +152,8 @@ def create_ini(config: BaseModel, file: str = 'config.ini', environ_mode: str = 
     write_ini(data, file)
 
 
-def create_env(config: BaseModel, file: str = '.env', group_separator: str = '.', use_uppercase: bool = True, environ_mode: str = ENVIRON_MODE_IGNORE):
+def create_env(config: BaseModel, file: str = '.env', group_separator: str = '.', use_uppercase: bool = True, environ_mode: str = ENVIRON_MODE_IGNORE, default_mode: str = DEFAULT_MODE_ASK):
     check_file(file)
 
-    data = prompt(config, environ_mode)
+    data = prompt(config, environ_mode, default_mode)
     write_env(data, file, group_separator, use_uppercase)
