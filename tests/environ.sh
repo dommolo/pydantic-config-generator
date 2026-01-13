@@ -1,7 +1,8 @@
-export RADIUS=12
-export BORDER_COLOR=blue
-export FILL_COLOR=red
-export TEXT=test
+export CIRCLE__RADIUS=12
+export CIRCLE__BORDER_COLOR=blue
+export CIRCLE__FILL_COLOR=red
+export CIRCLE__TEXT=test
+export CIRCLE__BORDER__COLOR=black
 
 python environ.py
 

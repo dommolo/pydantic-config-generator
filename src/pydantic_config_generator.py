@@ -13,7 +13,8 @@ DEFAULT_MODE_AUTO = 'auto'
 
 
 def prompt_value(item, group: str = '', environ_mode: str = ENVIRON_MODE_IGNORE, default_mode: str = DEFAULT_MODE_ASK) -> Any:
-    env_value = os.environ.get(item.name.upper(), None)
+    env_name = group.upper().replace('.', '__') + item.name.upper()
+    env_value = os.environ.get(env_name, None)
 
     skip = False
 
