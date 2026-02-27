@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from pydantic_config_generator import prompt, write_ini, write_env
+from pydantic_config_generator import prompt
 
 
 class Test(BaseModel):
@@ -18,3 +18,4 @@ for key, field in fields:
     print(f'{key}: required={field.required}, allow_none={field.allow_none}, default={field.default}, type={field.type_}')
 
 config = prompt(Test)
+print(config)

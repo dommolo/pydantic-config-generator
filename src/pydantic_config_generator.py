@@ -60,6 +60,14 @@ def prompt_value(item, group: str = '', environ_mode: str = ENVIRON_MODE_IGNORE,
         return vv
 
 
+def check_env_has_group(group: str):
+    env_group_name = group.upper().replace('.', '__')
+    for k in os.environ.keys():
+        if k.upper().startswith(env_group_name):
+            return True
+    return False
+
+
 def prompt_config(config: BaseModel, group: str = None, environ_mode: str = ENVIRON_MODE_IGNORE, default_mode: str = DEFAULT_MODE_ASK) -> BaseModel:
     output = {}
 
@@ -69,15 +77,26 @@ def prompt_config(config: BaseModel, group: str = None, environ_mode: str = ENVI
     for key, field in config.__fields__.items():
         if issubclass(field.type_, BaseModel):
             if not field.required:
-                s = input(
-                    f'{group}{field.name} is optional. Skip? (y/n) [n]: ')
+                env_has_group = check_env_has_group(group.upper().replace('.', '__') + field.name.upper())
+                
+                # does not skip because the group is set in the environment
+                if environ_mode != ENVIRON_MODE_IGNORE and env_has_group:
+                    s = 'n'
+                # skip because the group is not set in the environment
+                elif environ_mode == ENVIRON_MODE_SKIP and not env_has_group:
+                    s = 'y'
+                else:
+                    s = input(
+                        f'{group}{field.name} is optional. Skip? (y/n) [n]: ')
+
                 if s == 'y':
                     continue
 
             output[key] = prompt_config(
                 field.type_, group=f'{group}{field.name}.', environ_mode=environ_mode, default_mode=default_mode)
         else:
-            value = prompt_value(field, group, environ_mode=environ_mode, default_mode=default_mode)
+            value = prompt_value(
+                field, group, environ_mode=environ_mode, default_mode=default_mode)
 
             if value != field.default:
                 output[key] = value
@@ -88,7 +107,8 @@ def prompt_config(config: BaseModel, group: str = None, environ_mode: str = ENVI
 def prompt(config_class: BaseModel, environ_mode: str = ENVIRON_MODE_IGNORE, default_mode: str = DEFAULT_MODE_ASK):
     while True:
         try:
-            data = prompt_config(config_class, environ_mode=environ_mode, default_mode=default_mode)
+            data = prompt_config(
+                config_class, environ_mode=environ_mode, default_mode=default_mode)
             config_class(**data)
             return data
         except Exception as e:
